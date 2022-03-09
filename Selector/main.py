@@ -61,11 +61,14 @@ def insertBLOB(name, year, genre,asubject, developer, publisher, logo):
 #insertBLOB("Far Cry 3", "2012", "FPS", "Ubisoft", "Ubisoft",r"C:\Users\a.lorenc\Downloads\FarCry3.jpg")
 
 # Press the green button in the gutter to run the script.
+class callbacki():
+    text = "FIRST"
 
-def callback(instance):
-    global n
-    print('The button <%s> is being pressed' % instance.text)
-    n=n+1
+    def callback(self):
+        print('The button is being pressed')
+        self.text="WWWW"
+    def insert(self):
+        print()
 
 class AllGamesView(ScrollView):
     list_of_games=["Assasins Creed","Far Cry","Splinter Cell","Anno"]
@@ -78,7 +81,7 @@ class AllGamesView(ScrollView):
         stack.bind(height=stack.setter('height'))
         stack.spacing=[10,10]
         for game in self.list_of_games:
-            stack.add_widget(Button(text=game, size_hint=[None, None],size=(150,150)))
+            stack.add_widget(Button(text=callbacki.text, size_hint=[None, None],size=(150,150),on_press=callbacki.callback))
             stack.add_widget(Button(text=game, size_hint=[None, None],size=(150,150)))
             stack.add_widget(Button(text=game, size_hint=[None, None],size=(150,150)))
             stack.add_widget(Button(text=game, size_hint=[None, None],size=(150,150)))
@@ -95,21 +98,6 @@ class AllGamesView(ScrollView):
         self.add_widget(stack)
         print(stack.minimum_height)
         print(self.height)
-class AllGamesView2(StackLayout):
-    list_of_games=["Assasins Creed","Far Cry","Splinter Cell","Anno"]
-    def __init__(self, **kwargs):
-        super(AllGamesView2, self).__init__(**kwargs)
-
-        self.spacing=[10,10]
-        for game in self.list_of_games:
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.125, 0.125]))
-            self.add_widget(Button(text=game, size_hint=[0.25, 0.25]))
 
 
 class MainView(AnchorLayout):
@@ -143,26 +131,43 @@ class AddView(GridLayout):
         self.cols = 2
         self.add_widget(Label(text='Nazwa Gry'))
         self.add_widget(Label(text='Rok Produkcji'))
-        self.add_widget(TextInput(multiline=True,size_hint=(0.5,0.5)))
-        self.add_widget(TextInput(multiline=False))
+        self.input1=TextInput(multiline=True)
+        self.add_widget(self.input1)
+        self.input2 = TextInput(multiline=False)
+        self.add_widget(self.input2)
         self.add_widget(Label(text='Gatunek'))
         self.add_widget(Label(text='Teamtyka'))
-        self.add_widget(TextInput(multiline=False))
-        self.add_widget(TextInput(multiline=False))
+        self.input3=TextInput(multiline=False)
+        self.add_widget(self.input3)
+        self.input4=TextInput(multiline=False)
+        self.add_widget(self.input4)
         self.add_widget(Label(text='Deweloper'))
         self.add_widget(Label(text='Wydawca'))
-        self.add_widget(TextInput(multiline=False))
-        self.add_widget(TextInput(multiline=False))
+        self.input5=TextInput(multiline=False)
+        self.add_widget(self.input5)
+        self.input6=TextInput(multiline=False)
+        self.add_widget(self.input6)
         #self.add_widget(Label(text='Okładka'))
-        self.add_widget(Button(text='Wybierz okładkę',on_press=callback))
+        self.add_widget(Button(text='Wybierz okładkę',on_press=self.transition))
 
         #self.add_widget(Label())
         grid=GridLayout()
         grid.cols=2
-        grid.add_widget(Button(text='Zapisz',on_press=callback))
-        grid.add_widget(Button(text='Wyczyść',on_press=callback))
+        grid.add_widget(Button(text='Zapisz',on_press=self.submit))
+        grid.add_widget(Button(text='Wyczyść', on_press=self.clear))
         self.add_widget(grid)
 
+    def submit(self,obj):
+        print(self.input1.text+self.input2.text+self.input3.text+self.input4.text+self.input5.text+self.input6.text)
+    def clear(self,obj):
+        self.input1.text= ""
+        self.input2.text = ""
+        self.input3.text = ""
+        self.input4.text = ""
+        self.input5.text = ""
+        self.input6.text = ""
+    def transition(self,obj):
+        app.screen_manager.current="Main"
 
 class MyApp(App):
 
@@ -174,16 +179,32 @@ class MyApp(App):
         #return LookupView()
         self.screen_manager = ScreenManager()
         '''Creation of login screen'''
-        self.login_page = AllGamesView()
-        screen = Screen(name='Login')
-        screen.add_widget(self.login_page)
+        self.add_page = AddView()
+        screen = Screen(name='Add')
+        screen.add_widget(self.add_page)
+        self.screen_manager.add_widget(screen)
+
+        self.allgames_page = AllGamesView()
+        screen = Screen(name='AllGames')
+        screen.add_widget(self.allgames_page)
+        self.screen_manager.add_widget(screen)
+
+        self.main_page = MainView()
+        screen = Screen(name='Main')
+        screen.add_widget(self.main_page)
+        self.screen_manager.add_widget(screen)
+
+        self.lookup_page = LookupView()
+        screen = Screen(name='Lookup')
+        screen.add_widget(self.lookup_page)
         self.screen_manager.add_widget(screen)
 
         return self.screen_manager
 
 
 if __name__ == '__main__':
-    MyApp().run()
+    app=MyApp()
+    app.run()
 #Valid properties are ['anchors', 'base_direction', 'bold', 'center', 'center_x', 'center_y', 'children', 'cls', 'color',
 # 'disabled', 'disabled_color', 'disabled_outline_color', 'ellipsis_options', 'font_blended', 'font_context', 'font_family',
 # 'font_features', 'font_hinting', 'font_kerning', 'font_name', 'font_size', 'halign', 'height', 'ids', 'is_shortened',
