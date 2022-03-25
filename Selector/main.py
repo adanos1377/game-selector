@@ -125,6 +125,18 @@ class DBconnection:
         except Exception as e:
             print(e)
             print("error trying to get all games")
+    def getRandomGame(self):
+        print("Fetching random game")
+        try:
+            query = """SELECT * FROM games.games ORDER BY RAND() LIMIT 1"""
+            self.cursor.execute(query)
+            result = self.cursor.fetchall()
+            for game in result:
+                All_games.append(Game(*game))
+            print("Succesfully fetched all data")
+        except Exception as e:
+            print(e)
+            print("error trying to get random game")
     def insertBLOB(self, name, year, genre, asubject, rating, developer, publisher, logo):
         print("Adding new game to DB")
         try:
@@ -162,7 +174,6 @@ class AllGamesView(BoxLayout):
     def __init__(self, **kwargs):
         super(AllGamesView, self).__init__(**kwargs)
         self.orientation="vertical"
-
         navbar=BoxLayout(height=200,size_hint=[1, 0.1])
         navbar.orientation="horizontal"
         navbar.add_widget(Button(text="<-", on_press=self.wstecz,size_hint=[0.5, 1]))
@@ -214,11 +225,10 @@ class MainView(FloatLayout):
                                      background_color =[0.1, 0.7, 1, 1]))
         self.add_widget(box_middle)
         self.add_widget(anchor_top)
-        # self.add_widget(Button(text="Przeglądaj gry",size_hint=[0.2,0.2],on_press=self.transition2))
-        # self.add_widget(Button(text="Wybór Tytułu",size_hint=[0.2,0.2],on_press=self.transition3))
     def transition1(self,obj):
         app.screen_manager.current="Add"
     def transition2(self,obj):
+
         app.screen_manager.current="AllGames"
     def transition3(self,obj):
         app.screen_manager.current="Lookup"
@@ -263,22 +273,34 @@ class LookupView(GridLayout):
         boxlayout.orientation="vertical"
         anchor=AnchorLayout() #obrazek
 
-        self.labelName=Label()#text=game.name
+        self.labelName=Button(background_color=[15/255,252/255,3/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelName.text_size = [self.labelName.width, None]
         boxlayout.add_widget(self.labelName)
-        self.labelYear=Label()#text=game.year
+        self.labelYear=Button(background_color=[217/255,28/255,56/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelYear.text_size = [self.labelYear.width, None]
         boxlayout.add_widget(self.labelYear)
-        self.labelGenre=Label()#text=game.genre
+        self.labelGenre=Button(background_color=[15/255,252/255,3/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelGenre.text_size = [self.labelGenre.width, None]
         boxlayout.add_widget(self.labelGenre)
         self.labelSubject=Button(background_color=[217/255,28/255,56/255,1],
-                                 background_normal='')#text=game.subject
-        self.labelSubject.text_size=[self.labelSubject.width*1.6,None]
-        #self.labelSubject.text_size=self.labelSubject.size
+                                 background_normal='',color=[0,0,0,1])
+        self.labelSubject.text_size=[self.labelSubject.width*1.3,None]
+
         boxlayout.add_widget(self.labelSubject)
-        self.labelRating=Label()#text="Ocena: "+game.rating+"/10"
+        self.labelRating=Button(background_color=[15/255,252/255,3/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelRating.text_size = [self.labelRating.width, None]
         boxlayout.add_widget(self.labelRating)
-        self.labelDeveloper=Label()#text=game.developer
+        self.labelDeveloper=Button(background_color=[217/255,28/255,56/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelDeveloper.text_size = [self.labelDeveloper.width, None]
         boxlayout.add_widget(self.labelDeveloper)
-        self.labelPublisher=Label()# text=game.publisher
+        self.labelPublisher=Button(background_color=[15/255,252/255,3/255,1],
+                                 background_normal='',color=[0,0,0,1])
+        self.labelPublisher.text_size = [self.labelPublisher.width, None]
         boxlayout.add_widget(self.labelPublisher)
 
         data = io.BytesIO(game.logo)
@@ -325,7 +347,6 @@ class LookupView(GridLayout):
         data = io.BytesIO(game.logo)
         img=CoreImage(data, ext="jpeg").texture
         self.new_img.texture = img
-        #app.screen_manager.current = "Main"
     def next(self,obj):
         if (len(All_games) < 1): return
         self.counter+=1
@@ -467,19 +488,25 @@ class MyApp(App):
 class popupTitle(Popup):
     def __init__(self, **kwargs):
         super(popupTitle, self).__init__(**kwargs)
-
+        Window.bind(on_key_down=self._on_keyboard_down)
         self.size_hint=[0.5,0.5]
         self.auto_dismiss=False
         self.title="Filtruj po tytule"
         box=BoxLayout()
         box.orientation="vertical"
         self.input1=TextInput(input_type='text',multiline=False, write_tab=False)
+        self.input1.focus=True
         box.add_widget(self.input1)
         box2=BoxLayout()
         box2.add_widget(Button(text="Szukaj", on_release=self.szukaj))
         box2.add_widget(Button(text="Anuluj", on_release=self.close))
         box.add_widget(box2)
         self.add_widget(box)
+    def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+        if self.input1.focus and keycode == 40:  # 40 - Enter key pressed
+            dbconnector = DBconnection()
+            dbconnector.getGamesByTitle(self.input1.text)
+            self.dismiss()
     def szukaj(self,obj):
         dbconnector=DBconnection()
         dbconnector.getGamesByTitle(self.input1.text)
@@ -489,19 +516,25 @@ class popupTitle(Popup):
 class popupYear(Popup):
     def __init__(self, **kwargs):
         super(popupYear, self).__init__(**kwargs)
-
+        Window.bind(on_key_down=self._on_keyboard_down)
         self.size_hint=[0.5,0.5]
         self.auto_dismiss=False
         self.title="Filtruj po roku wydania"
         box=BoxLayout()
         box.orientation="vertical"
         self.input1=TextInput(input_type='number',multiline=False, write_tab=False)
+        self.input1.focus = True
         box.add_widget(self.input1)
         box2=BoxLayout()
         box2.add_widget(Button(text="Szukaj", on_release=self.szukaj))
         box2.add_widget(Button(text="Anuluj", on_release=self.close))
         box.add_widget(box2)
         self.add_widget(box)
+    def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+        if self.input1.focus and keycode == 40:  # 40 - Enter key pressed
+            dbconnector = DBconnection()
+            dbconnector.getGamesByYear(self.input1.text)
+            self.dismiss()
     def szukaj(self,obj):
         dbconnector=DBconnection()
         dbconnector.getGamesByYear(self.input1.text)
@@ -511,19 +544,25 @@ class popupYear(Popup):
 class popupGenre(Popup):
     def __init__(self, **kwargs):
         super(popupGenre, self).__init__(**kwargs)
-
+        Window.bind(on_key_down=self._on_keyboard_down)
         self.size_hint=[0.5,0.5]
         self.auto_dismiss=False
         self.title="Filtruj po gatunku"
         box=BoxLayout()
         box.orientation="vertical"
         self.input1=TextInput(input_type='text',multiline=False, write_tab=False)
+        self.input1.focus = True
         box.add_widget(self.input1)
         box2=BoxLayout()
         box2.add_widget(Button(text="Szukaj", on_release=self.szukaj))
         box2.add_widget(Button(text="Anuluj", on_release=self.close))
         box.add_widget(box2)
         self.add_widget(box)
+    def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+        if self.input1.focus and keycode == 40:  # 40 - Enter key pressed
+            dbconnector = DBconnection()
+            dbconnector.getGamesByGenre(self.input1.text)
+            self.dismiss()
     def szukaj(self,obj):
         dbconnector=DBconnection()
         dbconnector.getGamesByGenre(self.input1.text)
@@ -533,19 +572,25 @@ class popupGenre(Popup):
 class popupRating(Popup):
     def __init__(self, **kwargs):
         super(popupRating, self).__init__(**kwargs)
-
+        Window.bind(on_key_down=self._on_keyboard_down)
         self.size_hint=[0.5,0.5]
         self.auto_dismiss=False
         self.title="Filtruj po ocenie"
         box=BoxLayout()
         box.orientation="vertical"
         self.input1=TextInput(multiline=False, write_tab=False)
+        self.input1.focus = True
         box.add_widget(self.input1)
         box2=BoxLayout()
         box2.add_widget(Button(text="Szukaj", on_release=self.szukaj))
         box2.add_widget(Button(text="Anuluj", on_release=self.close))
         box.add_widget(box2)
         self.add_widget(box)
+    def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+        if self.input1.focus and keycode == 40:  # 40 - Enter key pressed
+            dbconnector = DBconnection()
+            dbconnector.getGamesByRating(self.input1.text)
+            self.dismiss()
     def szukaj(self,obj):
         dbconnector=DBconnection()
         dbconnector.getGamesByRating(self.input1.text)
@@ -570,7 +615,7 @@ class fileViewer(GridLayout):
 
 if __name__ == '__main__':
     #TODO get all games from DB
-    dbconnector=DBconnection()
+    dbconnector = DBconnection()
     dbconnector.getAllGames()
     app=MyApp()
     app.run()
